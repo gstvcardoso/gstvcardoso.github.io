@@ -1,0 +1,106 @@
+---
+title: "Relatório 01"
+author: "Gustavo Cardoso"
+date: "07/04/2025"
+header-includes:
+  - \usepackage{titling}
+  - \pretitle{\begin{center}
+    \includegraphics[width=2in,height=2in]{ufsj.png}\LARGE\\}
+  - \posttitle{\end{center}}
+toc-title: "Sumário"
+output:
+  
+  html_document:
+    theme: journal
+    highlight: tango
+    toc: yes
+    number_sections: yes
+    includes:
+      in_header: logo.html
+  pdf_document:
+    
+    toc: yes
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+--- 
+
+# Objetivo
+
+O objetivo deste projeto estatístico é realizar uma análise descritiva de uma única variável — a resistência à compressão do concreto aos 28 dias — a partir de 20 observações experimentais. 
+
+# Apresentação do relatório
+
+Este trabalho teve como finalidade aplicar os conceitos de estatística descritiva em um conjunto de dados representativos da resistência à compressão de corpos de prova de concreto, após 28 dias de cura, conforme prática usual de controle tecnológico em obras de Engenharia Civil.
+
+A análise foi feita a partir de 20 observações, simulando um ensaio de laboratório. O conjunto de dados foi organizado e estudado com o auxílio da linguagem de programação R, no ambiente RStudio, que permitiu a tabulação automática dos valores, geração de gráficos e cálculo das principais medidas estatísticas.
+
+O estudo também considerou os critérios estabelecidos pela norma ABNT NBR 7215, avaliando se o lote analisado atende às exigências mínimas para aceitação do concreto, especialmente no que diz respeito ao valor característico da resistência à compressão (fck).
+```{r}
+# --- DADOS ---
+resistencia <- c(28, 30, 32, 29, 31, 33, 27, 30, 29, 28,
+                 34, 32, 30, 31, 29, 30, 28, 33, 32, 29)
+
+# --- 1. ROL (ORDENAÇÃO) ---
+rol <- sort(resistencia)
+print("Rol dos dados:")
+print(rol)
+
+# --- 2. TABELA DE FREQUÊNCIAS ---
+tabela_freq <- table(resistencia)
+freq_relativa <- prop.table(tabela_freq) * 100
+tabela_final <- data.frame(
+  Valor = as.numeric(names(tabela_freq)),
+  Freq_Absoluta = as.vector(tabela_freq),
+  Freq_Relativa = round(as.vector(freq_relativa), 2)
+)
+print("Tabela de Frequências:")
+print(tabela_final)
+
+# --- 3. MEDIDAS DE POSIÇÃO E DISPERSÃO ---
+media <- mean(resistencia)
+mediana <- median(resistencia)
+moda <- as.numeric(names(sort(table(resistencia), decreasing = TRUE)[1]))
+dp <- sd(resistencia)
+cv <- (dp / media) * 100
+amplitude <- max(resistencia) - min(resistencia)
+
+cat("\nMedidas Estatísticas:\n")
+cat("Média:", media, "MPa\n")
+cat("Mediana:", mediana, "MPa\n")
+cat("Moda:", moda, "MPa\n")
+cat("Desvio Padrão:", round(dp, 2), "MPa\n")
+cat("Coeficiente de Variação:", round(cv, 2), "%\n")
+cat("Amplitude:", amplitude, "MPa\n")
+
+# --- 4. GRÁFICOS ---
+par(mfrow = c(1, 2)) # dividir a tela em 2 gráficos lado a lado
+
+# Histograma
+hist(resistencia, main = "Histograma da Resistência",
+     xlab = "Resistência (MPa)", col = "steelblue", border = "white")
+
+# Boxplot
+boxplot(resistencia, main = "Boxplot da Resistência",
+        ylab = "Resistência (MPa)", col = "orange")
+
+# --- 5. NORMA NBR 7215 (opcional) ---
+# Verifica se atende ao fck de 30 MPa (por exemplo)
+fck <- 30
+n_inf <- sum(resistencia < fck)
+cat("\nCom base na NBR 7215:\n")
+cat("Número de corpos de prova abaixo de", fck, "MPa:", n_inf, "\n")
+
+if (n_inf <= 1) {
+  cat("Concreto APROVADO (até 1 valor abaixo de fck permitido).\n")
+} else {
+  cat("Concreto REPROVADO (mais de 1 valor abaixo de fck).\n")
+}
+
+```
+# Conclusão 
+
+Com base nos dados analisados, constatou-se que a média da resistência à compressão dos corpos de prova foi de 30 MPa, com desvio padrão de aproximadamente 1,85 MPa, indicando baixa dispersão e boa uniformidade do lote.

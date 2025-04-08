@@ -1,0 +1,19 @@
+---
+title: "Gustavo Cardoso"
+image: "gustavo.jpg"
+links:
+  - label: LinkedIn
+    url: "https://www.linkedin.com/in/gustavo-henrique-louren%C3%A7o-cardoso/"
+  - label: Instagram
+    url: "https://www.instagram.com/gucardoso14/"
+  - label: GitHub
+    url: "https://github.com/gstvcardoso"
+  - label: Email
+    url: "cardosu14@gmail.com"
+  - label: Relatórios
+    url: "./relatorio/index.html"
+output:
+  postcards::jolla
+---
+ 
+Tenho 20 anos, sou estágiario em mecânica na empresa VSB e estou cursando Engenharia Civil na UFSJ.

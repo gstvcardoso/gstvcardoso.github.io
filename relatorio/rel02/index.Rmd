@@ -1,7 +1,7 @@
 ---
 title: "Relatório 02"
-author: "Ben Dêivide"
-date: "12/04/2022"
+author: "Gustavo Cardoso"
+date: "10/04/2022"
 header-includes:
   - \usepackage{titling}
   - \pretitle{\begin{center}
@@ -24,15 +24,71 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 --- 
 
 # Objetivo
 
-Descrever o objetivo do relatório!
+O objetivo deste trabalho é estudar as distribuições amostrais envolvidas na Análise de Variância (ANOVA), compreendendo tanto os fundamentos teóricos quanto a aplicação prática por meio de dados simulados. O foco é evidenciar como as distribuições amostrais (especialmente a distribuição F de Fisher-Snedecor) são utilizadas para testar hipóteses sobre médias populacionais, além de desenvolver habilidades em programação estatística com a linguagem R, simulando dados e interpretando os resultados obtidos.
 
 # Apresentação do relatório
 
-Aqui será o local para apresentar o material sobre o relatório.
+A Análise de Variância (ANOVA) é uma ferramenta estatística amplamente utilizada na Engenharia e em diversas áreas científicas para comparar médias entre dois ou mais grupos. A base teórica da ANOVA depende de distribuições amostrais, especialmente da distribuição F, derivada da razão entre duas variâncias qui-quadrado independentes.
 
+Neste relatório, inicialmente são apresentados os conceitos fundamentais de distribuições amostrais, com ênfase na distribuição F. Em seguida, descreve-se a estrutura da ANOVA, seus pressupostos e interpretação dos componentes da Tabela ANOVA.
+
+Na etapa prática, foi utilizado o software R para simular conjuntos de dados sob diferentes cenários (com e sem diferenças significativas entre médias) e realizar análises ANOVA. O código desenvolvido permite gerar amostras com variâncias homogêneas e testar hipóteses com base na estatística F, avaliando o valor de p e a significância estatística. Os dados simulados possibilitaram observar como se comportam as distribuições amostrais sob diferentes condições.
+
+Os principais passos realizados incluem:
+
+Geração de amostras de diferentes populações normais;
+
+Verificação dos pressupostos (normalidade e homocedasticidade);
+
+Aplicação do teste ANOVA (função aov() e summary() no R);
+
+Visualização dos dados (boxplots, histogramas e densidades);
+
+Interpretação dos resultados em termos de significância estatística.
+
+```{r}
+# --- Simulação de Dados ---
+set.seed(123) # para reprodutibilidade
+
+grupo1 <- rnorm(20, mean = 35, sd = 3)  # Equipe A
+grupo2 <- rnorm(20, mean = 38, sd = 3)  # Equipe B
+grupo3 <- rnorm(20, mean = 41, sd = 3)  # Equipe C
+
+# Combinar dados
+produtividade <- c(grupo1, grupo2, grupo3)
+grupo <- factor(rep(c("Equipe_A", "Equipe_B", "Equipe_C"), each = 20))
+dados <- data.frame(grupo, produtividade)
+
+# --- Visualização Gráfica ---
+boxplot(produtividade ~ grupo, data = dados,
+        main = "Produtividade por Equipe",
+        ylab = "m²/dia", col = c("skyblue", "salmon", "lightgreen"))
+
+# --- Estatística Descritiva por Grupo ---
+aggregate(produtividade ~ grupo, data = dados, summary)
+
+# --- ANOVA ---
+anova_resultado <- aov(produtividade ~ grupo, data = dados)
+summary(anova_resultado)
+
+# --- Teste de Normalidade dos Resíduos ---
+shapiro.test(residuals(anova_resultado))
+
+# --- Verificação de Homogeneidade de Variâncias ---
+library(car)
+leveneTest(produtividade ~ grupo, data = dados)
+
+
+```
+
+# Conclusão
+
+O estudo das distribuições amostrais no contexto da ANOVA é essencial para compreender como decisões estatísticas são tomadas com base em dados experimentais. A distribuição F, principal elemento da ANOVA, permite testar se há evidência suficiente para rejeitar a hipótese de igualdade entre médias de diferentes grupos.
+
+Por meio das simulações em R, foi possível visualizar na prática como a estatística F varia conforme os dados e como os pressupostos influenciam a validade dos resultados. A integração entre teoria e prática fortaleceu o entendimento dos conceitos estatísticos envolvidos e evidenciou a importância de uma análise criteriosa ao aplicar testes inferenciais em projetos de engenharia e pesquisa.

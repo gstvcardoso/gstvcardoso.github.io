@@ -1,0 +1,98 @@
+---
+title: "Relatório 03"
+author: "Gustavo Cardoso"
+date: "17/04/2025"
+header-includes:
+  - \usepackage{titling}
+  - \pretitle{\begin{center}
+    \includegraphics[width=2in,height=2in]{ufsj.png}\LARGE\\}
+  - \posttitle{\end{center}}
+toc-title: "Sumário"
+output:
+  
+  html_document:
+    theme: journal
+    highlight: tango
+    toc: yes
+    number_sections: yes
+    includes:
+      in_header: logo.html
+  pdf_document:
+    
+    toc: yes
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+--- 
+
+# Objetivo
+
+Neste relatório estudaremos acerca do erro Tipo 1 do Teste F, aplicando níveis de significância 1%, 5% e 10%.
+
+# Apresentação do relatório
+
+Neste relatório, deixamos de lado a análise da resistência do concreto para estudar o comportamento do teste F, focando na taxa de erro tipo I e no poder do teste para níveis de significância de 1%, 5% e 10%.
+
+Para isso, simulamos 10.000 amostras de uma população normal com média 90, desvio padrão 4 e tamanho 30. Como a média amostral é igual à populacional, qualquer rejeição da hipótese nula representa um erro tipo I.
+
+Na análise do poder do teste, alteramos a média populacional para um valor ligeiramente diferente. Nesse caso, o teste deve rejeitar a hipótese nula; quando não o faz, comete-se um erro tipo II. O poder é então calculado como o complemento desse erro: 
+
+Poder = 1−P (erro tipo 2).
+
+
+
+```{r}
+# Função para calcular o alpha empírico
+calcular_alpha_empirico <- function(alpha, ntestes = 10000, n = 30, media = 90, desvio = 4) {
+  z_critico <- qnorm(1 - alpha / 2)
+  resultados <- numeric(ntestes)
+
+  for (i in seq_len(ntestes)) {
+    amostra <- rnorm(n, mean = media, sd = desvio)
+    media_amostra <- mean(amostra)
+    z <- (media_amostra - media) / (desvio / sqrt(n))
+    resultados[i] <- ifelse(abs(z) >= z_critico, 1, 0)
+  }
+
+  return(mean(resultados))
+}
+
+# Função para calcular o poder do teste
+calcular_poder <- function(alpha, media_verdadeira = 92, media_hipotese = 90, ntestes = 10000, n = 30, desvio = 4) {
+  z_critico <- qnorm(1 - alpha / 2)
+  resultados <- numeric(ntestes)
+
+  for (i in seq_len(ntestes)) {
+    amostra <- rnorm(n, mean = media_verdadeira, sd = desvio)
+    media_amostra <- mean(amostra)
+    z <- (media_amostra - media_hipotese) / (desvio / sqrt(n))
+    resultados[i] <- ifelse(abs(z) >= z_critico, 1, 0)
+  }
+
+  return(mean(resultados))
+}
+
+# Níveis de significância teóricos a serem testados
+niveis_alpha <- c(0.01, 0.05, 0.10)
+
+# Calculando os alphas empíricos e o poder para cada nível de significância
+resultados <- data.frame(
+  Alpha_Teorico = niveis_alpha,
+  Alpha_Empirico = sapply(niveis_alpha, calcular_alpha_empirico),
+  Poder = sapply(niveis_alpha, calcular_poder)
+)
+
+# Exibindo a tabela formatada
+print(resultados)
+```
+
+# Conclusão
+
+A partir das simulações realizadas, foi possível observar o comportamento esperado do teste F frente a diferentes níveis de significância. Quando a média populacional e a média amostral eram iguais, as taxas de erro tipo I se aproximaram dos valores teóricos de 1%, 5% e 10%, validando o funcionamento do teste sob a hipótese nula verdadeira.
+
+Na análise do poder do teste, ao introduzir pequenas variações na média populacional, verificamos que o poder aumentou com o nível de significância, refletindo uma maior sensibilidade do teste em detectar diferenças reais. Contudo, isso também implica um maior risco de erro tipo I, evidenciando o equilíbrio necessário entre os dois tipos de erro.
+
+Esses resultados reforçam a importância de compreender as distribuições amostrais e os critérios de decisão envolvidos na inferência estatística, especialmente em contextos práticos como o controle de qualidade na Engenharia Civil, onde decisões baseadas em testes estatísticos impactam diretamente a segurança e a eficiência dos projetos.

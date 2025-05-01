@@ -1,0 +1,119 @@
+---
+title: "Relatório 04"
+author: "Ben Dêivide"
+date: "01/05/2022"
+header-includes:
+  - \usepackage{titling}
+  - \pretitle{\begin{center}
+    \includegraphics[width=2in,height=2in]{ufsj.png}\LARGE\\}
+  - \posttitle{\end{center}}
+toc-title: "Sumário"
+output:
+  
+  html_document:
+    theme: journal
+    highlight: tango
+    toc: yes
+    number_sections: yes
+    includes:
+      in_header: logo.html
+  pdf_document:
+    
+    toc: yes
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+--- 
+
+# Objetivo
+
+Avaliar o efeito de quatro tipos de aditivos impermeabilizantes (Controle, Acrílico, Silicone e Asfáltico) sobre a absorção de água (%) de blocos de concreto moldados em laboratório, utilizando um Delineamento Inteiramente Casualizado (DIC) com 5 repetições por tratamento.
+
+# Apresentação do relatório
+
+Este relatório apresenta a análise estatística de um experimento conduzido em laboratório para avaliar o efeito de diferentes aditivos impermeabilizantes na absorção de água (%) de blocos de concreto. Utilizou-se um Delineamento Inteiramente Casualizado (DIC) com quatro tratamentos (tipos de aditivo) e cinco repetições cada.
+
+A análise foi realizada com base nos pressupostos da ANOVA, seguida por testes de normalidade dos resíduos, homogeneidade de variâncias e comparação múltipla de médias (Tukey). As informações são apresentadas de forma descritiva, visual e inferencial, com apoio de gráficos, tabelas e código R, buscando uma compreensão clara dos efeitos dos tratamentos sobre a variável de interesse.
+
+```{r}
+# Carregar pacotes
+library(gt)
+
+# Dados do experimento
+aditivo <- factor(rep(c("Controle", "Acrílico", "Silicone", "Asfáltico"), each = 5))
+absorcao <- c(
+  12.276, 12.408, 13.123, 12.528, 12.552,
+  10.058, 9.430, 8.567, 8.857, 8.977,
+  8.167, 7.908, 7.920, 7.833, 7.633,
+  9.215, 8.699, 7.713, 8.781, 8.311
+)
+
+# Criar data frame
+experimento <- data.frame(aditivo, absorcao)
+
+# Exibir tabela formatada
+experimento |>
+  gt() |>
+  tab_style(
+    style = list(cell_text(weight = "bold", color = "white"),
+                 cell_fill(color = "#0073e6")),
+    locations = cells_column_labels()
+  ) |>
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_body(columns = everything())
+  ) |>
+  data_color(
+    columns = everything(),
+    rows = seq(1, nrow(experimento), 2),
+    colors = "#f2f2f2"
+  ) |>
+  data_color(
+    columns = everything(),
+    rows = seq(2, nrow(experimento), 2),
+    colors = "#e6f7ff"
+  )
+
+# Estatísticas por grupo
+aggregate(absorcao ~ aditivo, data = experimento, 
+          FUN = function(x) c(média = mean(x), desvio = sd(x), CV = sd(x)/mean(x)*100))
+
+# Modelo de ANOVA
+modelo <- aov(absorcao ~ aditivo, data = experimento)
+
+# Tabela da ANOVA
+summary(modelo)
+
+# Teste de normalidade dos resíduos
+shapiro.test(resid(modelo))
+
+# Teste de homogeneidade de variâncias
+bartlett.test(absorcao ~ aditivo, data = experimento)
+
+# Boxplot
+boxplot(absorcao ~ aditivo, data = experimento,
+        col = c("lightblue", "lightgreen", "lightcoral", "gold"),
+        main = "Efeito dos Aditivos na Absorção de Água",
+        xlab = "Tipo de Aditivo", ylab = "Absorção de Água (%)")
+
+# Gráfico de resíduos
+plot(modelo, which = 1)  # Resíduos vs ajustados
+plot(modelo, which = 2)  # QQ-plot dos resíduos
+
+# Teste de Tukey
+tukey <- TukeyHSD(modelo)
+print(tukey)
+
+# Gráfico do teste de Tukey
+plot(tukey)
+
+```
+
+# Conclusão
+
+O experimento mostrou que há diferença significativa entre os tipos de aditivos impermeabilizantes em relação à absorção de água (%) dos blocos de concreto, conforme indicado pelo teste F da ANOVA. Os testes de pressupostos confirmaram a validade da análise (resíduos normais e variâncias homogêneas).
+O teste de Tukey indicou que o aditivo Silicone apresentou a menor absorção, significativamente diferente do grupo Controle, que apresentou os maiores valores.
+Portanto, o uso de aditivos impermeabilizantes — especialmente os do tipo Silicone — demonstrou-se eficaz na redução da absorção de água, contribuindo para a durabilidade dos blocos de concreto.

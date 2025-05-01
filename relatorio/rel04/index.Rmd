@@ -1,7 +1,7 @@
 ---
 title: "Relatório 04"
-author: "Ben Dêivide"
-date: "01/05/2022"
+author: "Gustavo Cardoso"
+date: "01/05/2025"
 header-includes:
   - \usepackage{titling}
   - \pretitle{\begin{center}

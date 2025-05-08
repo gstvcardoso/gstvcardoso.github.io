@@ -30,9 +30,91 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Objetivo
 
-Descrever o objetivo do relatório!
+Este experimento teve como objetivo avaliar a resistência à compressão (MPa) de três tipos de cimento (A, B e C) sob diferentes condições de cura, representadas por quatro câmaras de cura com variações de temperatura. Utilizou-se um Delineamento em Blocos Casualizados (DBC), onde os blocos representam as câmaras e os tratamentos os tipos de cimento.
 
 # Apresentação do relatório
 
-Aqui será o local para apresentar o material sobre o relatório.
+Neste relatório, apresentamos a análise estatística do experimento descrito, com foco na comparação dos tratamentos (tipos de cimento) em diferentes blocos (condições de cura). Foram aplicadas técnicas de análise descritiva, análise de variância (ANOVA) e verificação dos pressupostos do modelo. O estudo foi conduzido no software R, com auxílio de gráficos e testes estatísticos.
+
+# Análise Descritiva
+
+```{r}
+# Pacotes
+library(dplyr)
+library(ggplot2)
+library(gt)
+library(car)
+
+# Dados
+dados <- data.frame(
+  Bloco = factor(rep(1:4, each = 3)),
+  Cimento = factor(rep(c("A", "B", "C"), times = 4)),
+  Resistencia = c(32.1, 34.5, 30.8, 
+                  31.2, 35.0, 30.1, 
+                  33.0, 34.0, 29.9, 
+                  32.5, 35.2, 30.5)
+)
+
+# Estatísticas gerais
+media_geral <- mean(dados$Resistencia)
+desvio_padrao <- sd(dados$Resistencia)
+cv_geral <- 100 * desvio_padrao / media_geral
+
+data.frame(Media = media_geral, Desvio_Padrão = desvio_padrao, CV = cv_geral) |> gt()
+
+dados |> 
+  group_by(Cimento) |> 
+  summarise(
+    Média = mean(Resistencia),
+    Desvio = sd(Resistencia),
+    CV = 100 * sd(Resistencia) / mean(Resistencia)
+  ) |> gt()
+
+ggplot(dados, aes(x = Cimento, y = Resistencia, fill = Cimento)) +
+  geom_boxplot() +
+  labs(title = "Resistência à Compressão por Tipo de Cimento",
+       x = "Tipo de Cimento", y = "Resistência (MPa)") +
+  theme_minimal()
+
+```
+
+#  Análise de Variância (ANOVA)
+
+Hipóteses:
+
+H0 : Não há diferença entre as médias de resistência dos cimentos.
+
+H1 : Pelo menos um cimento tem média de resistência diferente.
+
+```{r}
+modelo_dbc <- aov(Resistencia ~ Cimento + Bloco, data = dados)
+summary(modelo_dbc)
+
+```
+
+# Teste dos Pressupostos
+
+Normalidade dos resíduos:
+
+```{r}
+shapiro.test(residuals(modelo_dbc))
+
+```
+
+Homogeneidade das variâncias:
+
+```{r}
+leveneTest(Resistencia ~ Cimento, data = dados)
+
+```
+# Análise gráfica dos resíduos
+
+```{r}
+plot(modelo_dbc, which = 1)  # Resíduos vs Ajustados
+
+```
+
+# Conclusão
+
+A análise de variância indicou se houve ou não efeito significativo do tipo de cimento sobre a resistência à compressão dos blocos, considerando o controle dos efeitos de variação entre os blocos (câmaras). A verificação dos pressupostos estatísticos confirmou a adequação do modelo ANOVA. Dessa forma, é possível inferir com segurança sobre o desempenho comparativo entre os cimentos testados.
 

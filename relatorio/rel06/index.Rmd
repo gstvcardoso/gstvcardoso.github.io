@@ -1,0 +1,187 @@
+---
+title: "Relatório 06"
+author: "Gustavo Cardoso"
+date: "22/05/2025"
+header-includes:
+  - \usepackage{titling}
+  - \pretitle{\begin{center}
+    \includegraphics[width=2in,height=2in]{ufsj.png}\LARGE\\}
+  - \posttitle{\end{center}}
+toc-title: "Sumário"
+output:
+  
+  html_document:
+    theme: journal
+    highlight: tango
+    toc: yes
+    number_sections: yes
+    includes:
+      in_header: logo.html
+  pdf_document:
+    
+    toc: yes
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+--- 
+
+# Objetivo
+
+Este trabalho tem como objetivo estudar os procedimentos de comparações múltiplas, com foco no Teste SNK. Para isso, buscamos:
+
+- Investigar quem desenvolveu o teste;
+
+- Identificar as situações ideais para sua aplicação;
+
+- Demonstrar sua aplicação utilizando o software R;
+
+- Apresentar os procedimentos analíticos e cálculos à mão.
+
+# Apresentação do relatório
+
+O presente relatório tem como finalidade apresentar um estudo detalhado sobre o teste de comparações múltiplas conhecido como SNK (Student-Newman-Keuls). A pesquisa contempla aspectos históricos, fundamentos teóricos, aplicação prática em dados simulados no R (voltados à Engenharia Civil) e, por fim, o detalhamento dos cálculos manuais que embasam o teste.
+
+# Origem e desenvolvimento do Teste SNK
+
+O Teste SNK é uma evolução do teste t de Student, criado por William Sealy Gosset, que publicava sob o pseudônimo "Student". Em 1939, Milton Newman introduziu um procedimento passo-a-passo para comparar médias de forma ordenada. Posteriormente, em 1952, Maurice Keuls refinou esse método, levando à formulação do teste que hoje conhecemos como Student-Newman-Keuls (SNK).
+
+Esse teste foi desenvolvido com o objetivo de detectar diferenças significativas entre médias de tratamentos sem aumentar consideravelmente a probabilidade de erro do tipo I, como ocorre com múltiplas aplicações do teste t. Assim, o SNK equilibra sensibilidade e controle de erro.
+
+# Quando utilizar o Teste SNK
+
+O Teste SNK é indicado para ser utilizado após uma ANOVA significativa, ou seja, quando o teste F indica que ao menos uma média difere das demais. Ele é apropriado para:
+
+- Comparar médias de tratamentos em experimentos com 3 ou mais níveis;
+
+- Delineamentos simples como DIC (Delineamento Inteiramente Casualizado) ou DBC (Delineamento em Blocos Casualizados);
+
+- Situações em que se deseja maior sensibilidade em comparações ordenadas.
+
+# Exemplo no R
+
+```{r}
+# Carregar pacotes
+library(agricolae)
+
+# Dados simulados
+set.seed(123)
+tratamento <- rep(c("Aditivo1", "Aditivo2", "Aditivo3", "Aditivo4"), each = 5)
+resistencia <- c(
+  rnorm(5, mean = 28, sd = 1.5),
+  rnorm(5, mean = 32, sd = 1.2),
+  rnorm(5, mean = 30, sd = 1.0),
+  rnorm(5, mean = 35, sd = 1.3)
+)
+
+dados <- data.frame(tratamento, resistencia)
+
+# ANOVA
+modelo <- aov(resistencia ~ tratamento, data = dados)
+summary(modelo)
+
+# Teste SNK
+snk_resultado <- SNK.test(modelo, "tratamento", group = TRUE)
+print(snk_resultado)
+```
+
+Esse código aplica o teste SNK no R utilizando o pacote "agricolae", agrupando os tratamentos por letras conforme suas diferenças estatísticas.
+
+# Cálculos Manuais do Teste SNK 
+
+Vamos supor as seguintes médias ordenadas:
+
+Tratamento
+
+Média (MPa)
+
+A - 28.0
+
+B - 30.0
+
+C - 32.0
+
+D - 35.0
+
+Suponha que temos 5 repetições por tratamento e o QMResíduo (Erro médio quadrático) obtido pela ANOVA foi 1.44.
+
+Fórmula do erro padrão:
+
+```{r}
+cat("SE = √(QMresíduo / n)\n")
+```
+
+Substituindo os valores:
+
+```{r}
+cat("SE = √(1.44 / 5) = √0.288 = 0.5366\n")
+
+```
+
+Código em R:
+
+```{r}
+# Parâmetros
+qm_residuo <- 1.44
+n <- 5
+
+# Cálculo do erro padrão
+se <- sqrt(qm_residuo / n)
+se
+```
+
+Agora, calculamos os valores críticos q de Tukey para diferentes distâncias (usando k = 4 tratamentos, gl = 16, alfa = 0.05):
+
+```{r}
+# Valores críticos q para diferentes distâncias
+alpha <- 0.05
+gl <- 16
+k <- 4
+
+q_values <- qtukey(p = 1 - alpha, nmeans = 2:4, df = gl)
+q_values
+```
+
+Cálculo do DMS para cada distância (r):
+
+```{r}
+# DMS para distâncias 2, 3 e 4
+DMS <- q_values * se
+names(DMS) <- paste0("r=", 2:4)
+DMS
+```
+
+Verificação das diferenças entre médias:
+
+Diferenças:
+
+- D vs A: 35 - 28 = 7.0 (r = 4)
+- D vs B: 35 - 30 = 5.0 (r = 3)
+- D vs C: 35 - 32 = 3.0 (r = 2)
+- C vs A: 32 - 28 = 4.0 (r = 3)
+- B vs A: 30 - 28 = 2.0 (r = 2)
+
+Comparamos cada diferença com seu respectivo DMS. Se for maior, é significativa.
+
+```{r}
+# Diferenças entre médias
+dif_medias <- c(7.0, 5.0, 3.0, 4.0, 2.0)
+nomes <- c("D-A (r=4)", "D-B (r=3)", "D-C (r=2)", "C-A (r=3)", "B-A (r=2)")
+
+# DMS correspondentes
+DMS_comp <- c(DMS["r=4"], DMS["r=3"], DMS["r=2"], DMS["r=3"], DMS["r=2"])
+
+# Verificação
+resultado <- ifelse(dif_medias > DMS_comp, "Significativa", "Não Significativa")
+
+# Resultado final
+data.frame(Comparação = nomes, Diferença = dif_medias, DMS = round(DMS_comp, 3), Resultado = resultado)
+```
+
+# Conclusão
+
+O Teste SNK é uma alternativa interessante para comparações múltiplas após a ANOVA, oferecendo um bom balanço entre controle do erro do tipo I e poder de detecção de diferenças reais. É especialmente útil em experimentos com tratamentos ordenados, como os com diferentes aditivos de concreto.
+
+

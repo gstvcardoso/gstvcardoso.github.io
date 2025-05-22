@@ -182,6 +182,6 @@ data.frame(Comparação = nomes, Diferença = dif_medias, DMS = round(DMS_comp, 
 
 # Conclusão
 
-O Teste SNK é uma alternativa interessante para comparações múltiplas após a ANOVA, oferecendo um bom balanço entre controle do erro do tipo I e poder de detecção de diferenças reais. É especialmente útil em experimentos com tratamentos ordenados, como os com diferentes aditivos de concreto.
+O Teste SNK é uma alternativa interessante para comparações múltiplas após a ANOVA, oferecendo um bom balanço entre controle do erro do tipo I e poder de detecção de diferenças reais. É especialmente útil em experimentos com tratamentos ordenados, como nesse exemplo com diferentes aditivos de concreto.
 
 

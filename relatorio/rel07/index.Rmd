@@ -1,7 +1,7 @@
 ---
 title: "Relatório 07"
 author: "Gustavo Cardoso"
-date: "27/05/2025"
+date: "29/05/2025"
 header-includes:
   - \usepackage{titling}
   - \pretitle{\begin{center}
@@ -30,9 +30,101 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Objetivo
 
-Descrever o objetivo do relatório!
+O objetivo deste trabalho é investigar o que fazer quando as pressuposições da ANOVA não são atendidas, com foco na análise de resíduos. Vamos apresentar um exemplo de experimento simulado, no contexto da Engenharia Civil, onde os resíduos não seguem normalidade nem homogeneidade de variância, e aplicar soluções estatísticas para lidar com esse problema.
 
 # Apresentação do relatório
 
-Aqui será o local para apresentar o material sobre o relatório.
+A análise de variância (ANOVA) é uma ferramenta estatística amplamente utilizada para comparar médias de diferentes grupos. No entanto, para que seus resultados sejam válidos, algumas pressuposições precisam ser atendidas:
 
+-Normalidade dos resíduos;
+
+-Homogeneidade das variâncias (homocedasticidade);
+
+-Independência dos resíduos.
+
+Quando essas condições não são satisfeitas, os resultados da ANOVA podem ser comprometidos, levando a conclusões erradas.
+
+# Experimento sobre resistência a compressão do concreto
+
+Um experimento foi conduzido para avaliar a resistência à compressão de blocos de concreto utilizando três diferentes tipos de aditivos. Os dados foram simulados de forma que a variância entre os grupos seja propositalmente desigual, violando uma das pressuposições da ANOVA.
+
+```{r}
+# Simulação dos dados
+set.seed(42)
+
+# Três tratamentos com diferentes variâncias
+aditivo <- rep(c("Aditivo1", "Aditivo2", "Aditivo3"), each = 10)
+resistencia <- c(
+  rnorm(10, mean = 28, sd = 1),
+  rnorm(10, mean = 32, sd = 5),  # Maior variabilidade
+  rnorm(10, mean = 30, sd = 2)
+)
+
+dados <- data.frame(aditivo, resistencia)
+```
+
+# ANOVA e Diagnóstico de Resíduos
+
+Ajuste do Modelo:
+
+```{r}
+modelo <- aov(resistencia ~ aditivo, data = dados)
+summary(modelo)
+```
+
+Após o ajuste do modelo, é essencial avaliar os resíduos para verificar se atendem às pressuposições.
+
+Aplicando a Análise dos Resíduos:
+
+```{r}
+par(mfrow = c(2, 2))
+plot(modelo)
+```
+
+# Teste de Normalidade de Shapiro-Wilk:
+
+Verifica se os resíduos seguem distribuição normal.
+
+```{r}
+shapiro.test(residuals(modelo))
+```
+
+Se o valor-p for menor que 0,05, rejeita-se a normalidade.
+
+# Teste de homogeneidade de variância (Bartlett ou Levene):
+
+Pressupõe normalidade. Indicado quando os dados são aproximadamente normais.
+
+```{r}
+bartlett.test(resistencia ~ aditivo, data = dados)
+```
+
+# Correção da Situação: Transformação de Box-Cox
+
+Quando as pressuposições não são atendidas, uma solução comum é aplicar uma transformação nos dados, como a de Box-Cox.
+
+```{r}
+library(MASS)
+boxcox(modelo)
+```
+
+O gráfico sugere o valor de lambda ideal. Se lambda ≈ 0, a transformação logarítmica é apropriada.
+
+# Aplicando a transformação sugerida (ex: log):
+
+```{r}
+dados$resistencia_log <- log(dados$resistencia)
+modelo_log <- aov(resistencia_log ~ aditivo, data = dados)
+
+# Verificação pós-transformação
+par(mfrow = c(2, 2))
+plot(modelo_log)
+shapiro.test(residuals(modelo_log))
+bartlett.test(resistencia_log ~ aditivo, data = dados)
+```
+
+# Conclusão
+
+Neste trabalho, simulamos um experimento da Engenharia Civil com dados que violam as pressuposições da ANOVA. Verificamos a não normalidade e a heterocedasticidade dos resíduos. Aplicamos então a transformação de Box-Cox, que corrigiu os problemas, tornando os resíduos mais adequados para análise.
+
+A verificação criteriosa dos resíduos é uma etapa indispensável para garantir a validade das conclusões estatísticas em experimentos que utilizam ANOVA. Quando as suposições são violadas, transformações ou métodos alternativos devem ser considerados para assegurar a confiabilidade dos resultados.

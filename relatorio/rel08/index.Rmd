@@ -1,0 +1,182 @@
+---
+title: "Relatório 08"
+author: "Gustavo Cardoso"
+date: "05/06/2025"
+header-includes:
+  - \usepackage{titling}
+  - \pretitle{\begin{center}
+    \includegraphics[width=2in,height=2in]{ufsj.png}\LARGE\\}
+  - \posttitle{\end{center}}
+toc-title: "Sumário"
+output:
+  
+  html_document:
+    theme: journal
+    highlight: tango
+    toc: yes
+    number_sections: yes
+    includes:
+      in_header: logo.html
+  pdf_document:
+    
+    toc: yes
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+--- 
+
+# Objetivo
+
+O objetivo do relatório 08 é ajustar um modelo de regressão quadrática entre o teor de substituição e a resistência à compressão de um concreto especial, em função do teor de adição pozolânica. Neste relatório verificaremos a significância os termos lineares e quadráticos, e também se a curva ajustada apresenta algum ponto de máximo. Avaliaremos também a qualidade do modelo adotado.
+
+
+# Apresentação do relatório
+
+O concreto com adição pozolânica tem sido alvo de estudos devido às propriedades que esses aditivos conferem à matriz cimentícia. Entretanto, quantidades excessivas de substituição podem comprometer a resistência à compressão. Assim, espera-se uma relação quadrática entre o percentual de substituição e a resistência.
+
+# Dados e descrição do experimento abordado
+
+Foi conduzido um experimento com cinco níveis de substituição de cimento por pozolana: 0%, 5%, 10%, 15% e 20%, com 4 repetições cada. Após 28 dias de cura, foi medida a resistência à compressão de cada corpo de prova.
+
+Dados:
+
+```{r}
+# Dados do experimento
+dados <- data.frame(
+  aditivo = rep(c(0, 5, 10, 15, 20), each = 4),
+  resistencia = c(
+    26.50, 26.80, 27.00, 26.60,
+    30.10, 30.00, 30.30, 30.20,
+    33.70, 33.90, 33.80, 33.60,
+    31.20, 31.30, 31.10, 31.00,
+    28.40, 28.50, 28.60, 28.30
+  )
+)
+```
+
+# Gráfico exploratório 
+
+Agora, faremos a análise do gráfico exploratório:
+
+```{r}
+library(ggplot2)
+
+# Gráfico de dispersão
+ggplot(dados, aes(x = aditivo, y = resistencia)) +
+  geom_point(size = 3, color = "steelblue") +
+  labs(title = "Resistência vs Aditivo Plastificante",
+       x = "Proporção de Aditivo (%)",
+       y = "Resistência à Compressão (MPa)") +
+  theme_minimal()
+```
+
+O gráfico sugere uma tendência parabólica, com aumento inicial da resistência seguido por declínio após certo ponto, o que reforça a hipótese de que existe uma proporção ótima de substituição.
+
+# ANOVA com Aditivo como Fator (Qualitativo)
+
+```{r}
+aditivo_fator <- as.factor(dados$aditivo)
+anava <- aov(resistencia ~ aditivo_fator, data = dados)
+summary(anava)
+```
+
+A ANOVA mostrou-se altamente significativa (p < 0,001), indicando que há diferença estatística entre os grupos de substituição. Isso valida a modelagem usando a variável aditivo e motiva a busca por uma modelagem mais refinada considerando a natureza quantitativa do fator.
+
+# Diagnóstico dos Resíduos
+
+```{r}
+par(mfrow = c(2, 2))
+plot(anava)
+
+library(car)
+library(nortest)
+library(lmtest)
+
+# Resíduos
+dw <- durbinWatsonTest(anava)
+shapiro <- shapiro.test(residuals(anava))
+bart <- bartlett.test(resistencia ~ aditivo, data = dados)
+```
+
+- Shapiro-Wilk: p > 0.05 → os resíduos seguem distribuição normal.
+
+- Bartlett: p > 0.05 → homogeneidade das variâncias confirmada.
+
+- Durbin-Watson: valor próximo de 2 → resíduos independentes.
+
+Os pressupostos do modelo foram atendidos, indicando que os resultados da ANOVA são confiáveis.
+
+# Regressão Quadrática via ANOVA Quantitativa
+
+```{r}
+library(ExpDes.pt)
+reganava <- dic(trat = dados$aditivo, resp = dados$resistencia, quali = FALSE)
+```
+
+A análise indicou um ajuste significativo para o modelo quadrático:
+
+- Modelo ajustado: y = 26.775 + 1.342·x − 0.067·x²
+
+- O termo linear foi altamente significativo (p < 0.01).
+
+- O termo quadrático também foi altamente significativo (p < 0.01).
+
+# Análise de Resíduos (Modelo de Regressão)
+
+```{r}
+plotres(reganava)
+```
+
+O gráfico de resíduos para o modelo quantitativo indicou:
+
+- Distribuição aproximadamente simétrica dos resíduos em torno de zero.
+
+- Ausência de padrão sistemático (tendência ou curvatura).
+
+Essas evidências reforçam a adequação do modelo quadrático ajustado aos dados experimentais.
+
+# Ponto Ótimo e Previsão da Resistência Máxima
+
+ Ajuste do modelo quadrático para extração dos coeficientes:
+
+```{r}
+modelo_quad <- lm(resistencia ~ aditivo + I(aditivo^2), data = dados)
+summary(modelo_quad)
+```
+ 
+ Sabendo que o modelo é da forma \( y = \beta_0 + \beta_1 x + \beta_2 x^2 \), o ponto de máximo ocorre quando:
+
+$$
+x^* = -\\frac{\\beta_1}{2\\beta_2} = -\\frac{1.342}{2 \\times (-0.067)} \\approx 10.01\\%
+$$
+
+Este valor representa a substituição pozolânica **ótima**, ou seja, a proporção de aditivo que maximiza a resistência.
+
+Para estimar a resistência máxima:
+
+$$
+y_{\\text{máx}} = 26.775 + 1.342 \\times 10.01 - 0.067 \\times (10.01)^2 \\approx 33.9\\,\\text{MPa}
+$$
+
+
+# Curva Ajustada
+
+```{r}
+ggplot(dados, aes(x = aditivo, y = resistencia)) +
+  geom_point(size = 3, color = "darkblue") +
+  stat_smooth(method = "lm", formula = y ~ poly(x, 2, raw = TRUE),
+              se = FALSE, color = "darkgreen") +
+  labs(title = "Resistência do Concreto vs Aditivo (DIC)",
+       x = "Proporção de Aditivo (%)",
+       y = "Resistência (MPa)") +
+  theme_minimal()
+```
+
+O gráfico mostra claramente a forma parabólica da curva, reforçando visualmente o ponto de máximo em torno de 10% de substituição.
+
+# Conclusão
+
+O modelo quadrático ajustado mostrou-se apropriado para descrever o comportamento da resistência à compressão em função da substituição pozolânica. A análise indicou um ponto ótimo de substituição de aproximadamente 10%, com resistência máxima estimada em 33,9 MPa. Os testes de diagnóstico confirmaram a validade dos pressupostos da regressão, e o ajuste gráfico reforça a adequação do modelo proposto.

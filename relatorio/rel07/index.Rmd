@@ -123,6 +123,18 @@ shapiro.test(residuals(modelo_log))
 bartlett.test(resistencia_log ~ aditivo, data = dados)
 ```
 
+Análise dos gráficos após transformação logarítmica:
+
+-QQ-plot: Os pontos agora estão mais próximos da linha, indicando melhoria na normalidade dos resíduos;
+
+-Resíduos vs Ajustados: A dispersão dos resíduos está mais homogênea, sem o padrão de funil, o que sugere melhora na homogeneidade da variância;
+
+-Scale-Location: A variabilidade dos resíduos é mais constante ao longo dos valores ajustados, confirmando a eficácia da transformação;
+
+-Cook’s Distance: Mantém a ausência de observações com influência extrema.
+
+Com base nos gráficos e nos testes formais (valores-p maiores que 0,05), conclui-se que a transformação logarítmica foi eficaz para atender às pressuposições da ANOVA.
+
 # Conclusão
 
 Neste trabalho, simulamos um experimento da Engenharia Civil com dados que violam as pressuposições da ANOVA. Verificamos a não normalidade e a heterocedasticidade dos resíduos. Aplicamos então a transformação de Box-Cox, que corrigiu os problemas, tornando os resíduos mais adequados para análise.

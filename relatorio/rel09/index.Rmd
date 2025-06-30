@@ -1,0 +1,230 @@
+---
+title: "Relatório 09"
+author: "Gustavo Cardoso"
+date: "01 /07/2025"
+header-includes:
+  - \usepackage{titling}
+  - \pretitle{\begin{center}
+    \includegraphics[width=2in,height=2in]{ufsj.png}\LARGE\\}
+  - \posttitle{\end{center}}
+toc-title: "Sumário"
+output:
+  
+  html_document:
+    theme: journal
+    highlight: tango
+    toc: yes
+    number_sections: yes
+    includes:
+      in_header: logo.html
+  pdf_document:
+    
+    toc: yes
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+--- 
+
+# Objetivo
+
+No relatório 9, temos como objetivo compreender o uso de blocos para reduzir a variabilidade experimental, ajustar a ANOVA para um experimento fatorial triplo em DBC, verificar a significância dos efeitos principais e interações envolvidas, identificar práticas eficazes para o controle da evaporação, e, por fim, responder as questões voltadas para a análise do relatório.
+
+# Compilado de códigos em R para reproduzir a análise
+
+```{r}
+# Pacotes necessários
+library(agricolae)
+library(car)
+
+# Carregar dados
+dados <- read.table(header = TRUE, text = "
+bloco acabamento protecao base evap
+1 Liso Sem Brita 225.2
+2 Liso Sem Brita 197.4
+3 Liso Sem Brita 219.8
+4 Liso Sem Brita 221.8
+1 Liso Sem Solo 176.4
+2 Liso Sem Solo 175.2
+3 Liso Sem Solo 173.3
+4 Liso Sem Solo 178.3
+1 Liso Lona Brita 159.9
+2 Liso Lona Brita 177.4
+3 Liso Lona Brita 166.0
+4 Liso Lona Brita 160.0
+1 Liso Lona Solo 138.2
+2 Liso Lona Solo 135.1
+3 Liso Lona Solo 149.3
+4 Liso Lona Solo 132.3
+1 Liso CuraQ Brita 194.2
+2 Liso CuraQ Brita 183.9
+3 Liso CuraQ Brita 192.1
+4 Liso CuraQ Brita 182.2
+1 Liso CuraQ Solo 143.0
+2 Liso CuraQ Solo 156.8
+3 Liso CuraQ Solo 141.4
+4 Liso CuraQ Solo 153.7
+1 Vassourado Sem Brita 185.7
+2 Vassourado Sem Brita 194.9
+3 Vassourado Sem Brita 197.3
+4 Vassourado Sem Brita 198.0
+1 Vassourado Sem Solo 168.6
+2 Vassourado Sem Solo 158.3
+3 Vassourado Sem Solo 156.2
+4 Vassourado Sem Solo 148.7
+1 Vassourado Lona Brita 166.1
+2 Vassourado Lona Brita 165.7
+3 Vassourado Lona Brita 152.6
+4 Vassourado Lona Brita 149.4
+1 Vassourado Lona Solo 116.8
+2 Vassourado Lona Solo 128.0
+3 Vassourado Lona Solo 124.0
+4 Vassourado Lona Solo 136.6
+1 Vassourado CuraQ Brita 178.4
+2 Vassourado CuraQ Brita 197.6
+3 Vassourado CuraQ Brita 196.1
+4 Vassourado CuraQ Brita 188.0
+1 Vassourado CuraQ Solo 152.7
+2 Vassourado CuraQ Solo 145.1
+3 Vassourado CuraQ Solo 109.1
+4 Vassourado CuraQ Solo 144.7
+1 Escarificado Sem Brita 191.3
+2 Escarificado Sem Brita 194.8
+3 Escarificado Sem Brita 184.5
+4 Escarificado Sem Brita 169.8
+1 Escarificado Sem Solo 157.9
+2 Escarificado Sem Solo 148.6
+3 Escarificado Sem Solo 142.9
+4 Escarificado Sem Solo 156.1
+1 Escarificado Lona Brita 160.9
+2 Escarificado Lona Brita 142.9
+3 Escarificado Lona Brita 161.6
+4 Escarificado Lona Brita 162.4
+1 Escarificado Lona Solo 121.8
+2 Escarificado Lona Solo 132.3
+3 Escarificado Lona Solo 122.1
+4 Escarificado Lona Solo 148.5
+1 Escarificado CuraQ Brita 173.5
+2 Escarificado CuraQ Brita 166.5
+3 Escarificado CuraQ Brita 161.0
+4 Escarificado CuraQ Brita 166.1
+1 Escarificado CuraQ Solo 125.4
+2 Escarificado CuraQ Solo 142.7
+3 Escarificado CuraQ Solo 140.4
+4 Escarificado CuraQ Solo 145.5
+")
+
+# Transformar em fatores
+dados$bloco <- as.factor(dados$bloco)
+dados$acabamento <- as.factor(dados$acabamento)
+dados$protecao <- as.factor(dados$protecao)
+dados$base <- as.factor(dados$base)
+
+# Modelo ANOVA fatorial triplo em DBC
+modelo <- aov(evap ~ bloco + acabamento * protecao * base, data = dados)
+summary(modelo)
+
+# Comparações múltiplas (Tukey)
+TukeyHSD(modelo)
+
+# Diagnóstico dos resíduos
+par(mfrow = c(2,2))
+plot(modelo)
+
+# Verificação de normalidade
+shapiro.test(residuals(modelo))
+
+# Verificação de homogeneidade
+bartlett.test(evap ~ interaction(acabamento, protecao, base), data = dados)
+
+# Boxplot exploratório
+boxplot(evap ~ interaction(acabamento, protecao, base),
+        data = dados, las=2, col="lightblue",
+        main="Comparação dos Tratamentos")
+
+
+```
+
+# Qual o papel dos blocos neste experimento? Justifique a escolha do DBC.
+
+Os blocos foram usados para controlar a variabilidade ambiental que poderia interferir na evaporação (diferenças de vento, temperatura e umidade em cada setor do pátio).
+O Delineamento em Blocos Casualizados (DBC) foi escolhido porque:
+
+- Cada bloco contém todas as combinações de tratamentos;
+
+- Isso permite comparar tratamentos dentro de cada bloco;
+
+- Reduz a variabilidade residual, tornando a análise mais precisa.
+
+# Quantos tratamentos foram avaliados? Como esse número foi obtido?
+
+Neste relatório, foram avaliados 18 tratamentos. Esse número foi obtido realizando a multiplicação dos níveis dos fatores:
+
+3 (Acabamentos) x 3 (Proteção) x 2 (Base) = 18 Tratamentos.
+
+# A proteção com lona apresentou efeito significativo na redução da evaporação? E a cura química?
+
+A ANOVA mostrou que o fator proteção é significativo (p < 0,05), então, sim, houve um efeito significativo na redução da evaporação.
+
+- Sem a proteção, as médias de evaporação foram significativamente maiores;
+
+- Utilizando a lona branca, houve redução significativa da evaporação;
+
+- A cura química também apresentou redução na evaporação, porém se mostrou menos eficiente que a lona branca.
+
+# O tipo de base (brita ou solo) influenciou o resultado? Há evidência de interação entre base e acabamento?
+
+O fator base teve impacto sobre a evaporação. A base de solo úmido ajudou a reduzir mais a perda de água se comparada à brita seca, já que a brita seca reflete calor, dessa forma, aquecendo a superfície do concreto.
+
+Quanto à interação, sim, houve evidência de interação entre base e acabamento. O efeito da base difere de acabamento para acabamento.
+
+# O fator acabamento mostrou-se relevante na retenção de umidade? Em quais condições essa influência foi mais evidente?
+
+Sim, o fator acabamento foi relevante para a retenção da umidade. Superfícies escareificadas e vassouradas tenderam a apresentar menores taxas de evaporação que o acabamento liso, porque possuem maior rugosidade e retêm um pouco mais de água.
+
+Essa influência foi mais clara quando não havia proteção adicional (sem lona e sem cura química).
+Ou seja, em condições adversas (sem proteção), o acabamento teve papel decisivo.
+
+# Com base nos dados simulados, qual combinação de fatores você recomendaria para minimizar a evaporação em um dia seco e quente?
+
+Minha recomendação seria utilizar o acabamento escarificado, a proteção com lona branca e a base de solo úmido.
+
+O motivo por trás dessa escolha se deve ao seguinte: As médias de evaporação utilizando dessa combinação foram as menores.
+
+# Os blocos reduziram a variabilidade residual do modelo? Como isso pode ser verificado?
+
+Sim, os blocos ajudaram a reduzir a variabilidade residual.
+
+Isso pode ser verificado ao observar na ANOVA:
+
+- O erro residual (quadrado médio dos resíduos) fica menor comparado ao que seria obtido sem considerar blocos;
+
+- O fator bloco tende a apresentar um p-valor significativo, mostrando que realmente havia variação entre setores;
+
+Se você comparar o modelo com e sem blocos, verá que a variabilidade diminui e os tratamentos são estimados com mais precisão.
+
+# Que recomendação prática pode ser feita para execução de pavimentos em áreas com diferentes tipos de base refletiva?
+
+Com base nos dados coletados, pensemos o seguinte: 
+
+- Em áreas com brita seca, recomenda-se fortemente o uso de lona branca ou cura química para reduzir a evaporação;
+
+- Quando se puder preparar o solo, optar pelo solo úmido compactado ajuda muito a manter a umidade;
+
+- Mesmo com base refletiva, o acabamento escarificado é vantajoso.
+
+Assim, a prática recomendada é combinar base úmida, proteção com lona e acabamento rugoso sempre que possível, principalmente em dias quentes e secos.
+
+# Conclusão
+
+O experimento mostrou que a velocidade de evaporação da água no concreto é influenciada pelo tipo de acabamento, método de proteção e base utilizada, bem como pelas interações entre esses fatores. A cobertura com lona branca e o uso de solo úmido foram as práticas mais eficazes para reduzir a perda de água, principalmente quando associadas ao acabamento escarificado.
+
+O uso de blocos ajudou a controlar variações ambientais, tornando as comparações mais precisas. Assim, recomenda-se essa combinação de técnicas em dias quentes e secos, a fim de melhorar a cura e a qualidade do pavimento.
+
+O experimento, como demonstrado no relatório, respondeu todas as questões sugeridas de forma satisfatória.
+
+
+
+
